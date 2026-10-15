@@ -1,0 +1,2 @@
+# school-managementJAVA
+idk
