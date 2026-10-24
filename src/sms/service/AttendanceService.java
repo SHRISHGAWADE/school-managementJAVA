@@ -37,6 +37,21 @@ public class AttendanceService {
     return records.values().stream().filter(r -> r.date().equals(date)).toList();
   }
 
+  public List<AttendanceRecord> getAllAttendance() {
+    return records.values().stream()
+        .sorted(Comparator.comparing(AttendanceRecord::date).thenComparingInt(AttendanceRecord::studentId))
+        .toList();
+  }
+
+  public void loadAttendance(List<AttendanceRecord> saved) {
+    records.clear();
+    for (AttendanceRecord record : saved) {
+      String key = key(record.studentId(), record.date());
+      if (records.putIfAbsent(key, record) != null)
+        throw new IllegalArgumentException("Duplicate attendance record for student and date.");
+    }
+  }
+
   public List<AttendanceRecord> getMonthlyReport(int id, YearMonth month) {
     return getAttendanceByStudent(id).stream()
         .filter(r -> YearMonth.from(r.date()).equals(month))

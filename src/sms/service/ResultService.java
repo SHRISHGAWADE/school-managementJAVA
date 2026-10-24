@@ -18,6 +18,19 @@ public class ResultService {
     return results.values().stream().filter(r -> r.getStudentId() == studentId).toList();
   }
 
+  public List<Result> getAllResults() {
+    return results.values().stream()
+        .sorted(Comparator.comparingInt(Result::getExamId)
+            .thenComparingInt(Result::getStudentId)
+            .thenComparingInt(Result::getSubjectId))
+        .toList();
+  }
+
+  public void loadResults(List<Result> saved) {
+    results.clear();
+    for (Result result : saved) results.put(key(result), result);
+  }
+
   public List<Result> getResultsByExamAndSubject(int examId, int subjectId) {
     return results.values().stream()
         .filter(r -> r.getExamId() == examId && r.getSubjectId() == subjectId)

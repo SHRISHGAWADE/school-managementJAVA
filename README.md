@@ -1,6 +1,19 @@
-# School Management System Backend
+# School Management System
 
-This is an intermediate-level Java OOP backend project for a School Management System. It improves the original `School`, `Student`, `Teacher`, and `Main` design by separating domain models, services, finance logic, attendance, result management, transactions, exceptions, and file persistence.
+## Project Overview
+
+A Java school management application with a browser interface served by the project's built-in Java HTTP server. Java contains the domain models, business rules, services, HTTP API, and CSV persistence; HTML, CSS, and JavaScript provide the browser UI and call that API. A separate interactive console entry point is also available.
+
+## Implemented Modules
+
+- Dashboard with current student, teacher, and finance metrics
+- Student directory: enrollment, search, updates, activation, and CSV persistence
+- Teacher directory: hiring, search, profile updates, activation, and CSV persistence
+- Finance and fees: fee collection, salary payments, expenses, donations, summary metrics, and transaction ledger
+- Student attendance: daily recording, date-based review, and attendance rates
+- Exam results: exam and subject setup, marks entry and updates, percentages, and grades
+- Academics: academic year date ranges and grade/section structure
+- Timetable: weekly schedule, entry editing and deletion, overlap checks, and CSV persistence
 
 ## Package Structure
 
@@ -24,6 +37,8 @@ src/sms
     Result.java
     ClassSection.java
     TimetableEntry.java
+    AcademicYear.java
+    AcademicClass.java
     ExpenseCategory.java
     finance/
       Transaction.java
@@ -33,12 +48,20 @@ src/sms
     StudentCsvRepository.java
     TeacherCsvRepository.java
     TransactionCsvRepository.java
+    AttendanceCsvRepository.java
+    ExamCsvRepository.java
+    SubjectCsvRepository.java
+    ResultCsvRepository.java
+    TimetableCsvRepository.java
   service/
     SchoolService.java
     FinanceService.java
     AttendanceService.java
     ResultService.java
     TimetableService.java
+  web/
+    HttpApiServer.java
+    JsonUtil.java
 ```
 
 ## Better Class Design
@@ -65,7 +88,7 @@ This applies the Single Responsibility Principle because each class has one clea
 - `FinanceService` creates many `Transaction` objects
 - `AttendanceService` creates many `AttendanceRecord` objects
 - `ResultService` connects `Student`, `Exam`, and `Subject` through `Result`
-- `TimetableEntry` connects a class/section, teacher, subject, day, and period
+- `TimetableEntry` connects a class/section, teacher, subject, day, time range, and room
 - Repositories save and load data from CSV files
 
 ## New Classes Added
@@ -125,13 +148,20 @@ Transactions are stored in memory and saved to `data/transactions.csv`. This is 
 
 ## File Handling Persistence
 
-The project uses CSV files:
+The browser application loads CSV files from `data/` when its Java server starts and saves changes through the existing repositories. Files are created on first save where they do not yet exist:
 
 - `data/students.csv`
 - `data/teachers.csv`
 - `data/transactions.csv`
+- `data/attendance.csv`
+- `data/exams.csv`
+- `data/subjects.csv`
+- `data/results.csv`
+- `data/timetable.csv`
+- `data/academic-years.csv`
+- `data/academic-classes.csv`
 
-CSV keeps the project simple and college-friendly. The repository interface also makes it easy to replace CSV with MySQL later.
+The console application saves student, teacher, and transaction data when exiting through its menu. Keep the CSV files in place between runs to retain application data.
 
 ## Encapsulation And Abstraction
 
@@ -142,7 +172,7 @@ Fields are private and accessed through methods. Business rules are enforced ins
 - marks cannot exceed max marks
 - expenses cannot be paid if balance is too low
 - fee payments cannot exceed a student's remaining balance
-- a teacher or class cannot occupy two timetable entries in the same period
+- a teacher, class/section, or room cannot occupy overlapping timetable times
 - only one attendance record may exist for a student/date pair
 
 Abstraction is used through:
@@ -183,7 +213,6 @@ This makes errors more meaningful than generic crashes.
 
 - parent/guardian profile
 - class and section management
-- timetable
 - library module
 - transport module
 - hostel module
@@ -196,28 +225,41 @@ This makes errors more meaningful than generic crashes.
 
 ## How To Run
 
-`Main` starts an interactive terminal application. It loads student, teacher, and transaction CSV data on startup and saves those records only when the user selects **0. Exit**. No demo fees, salaries, donations, or expenses are created automatically.
+### Prerequisites
 
-From this project folder in PowerShell:
+- JDK 17 or newer (records and modern Java language features are used)
+- PowerShell on Windows, or a Bash-compatible shell on Linux/macOS
+- A modern web browser for the browser interface
+
+### Browser Application
+
+From the project folder in PowerShell, compile the Java sources and start the HTTP server:
 
 ```powershell
 javac -d out (Get-ChildItem -Recurse src -Filter *.java).FullName
+java -cp out sms.web.HttpApiServer 8081
+```
+
+Open `http://localhost:8081` in your browser. Keep the server running while using the browser application. Press **Ctrl+C** to stop it.
+
+On Linux/macOS, use:
+
+```bash
+mkdir -p out
+find src -name '*.java' -print0 | xargs -0 javac -d out
+java -cp out sms.web.HttpApiServer 8081
+```
+
+### Console Application
+
+To start the interactive terminal menu instead, run the matching command after compiling:
+
+```powershell
 java -cp out sms.Main
 ```
 
-If you use Git Bash or Linux/macOS:
-
 ```bash
-find src -name "*.java" -print0 | xargs -0 javac -d out
 java -cp out sms.Main
-```
-
-Run the dependency-free behavioral checks with:
-
-```bash
-rm -rf out && mkdir out
-find src test -name "*.java" -print0 | xargs -0 javac -d out
-java -ea -cp out sms.BackendSmokeTest
 ```
 
 ## OOP Principles Applied
@@ -228,3 +270,5 @@ java -ea -cp out sms.BackendSmokeTest
 - Polymorphism: `Student` and `Teacher` can both be treated as `Person`
 - Single Responsibility: finance, attendance, result, and school management are separate
 - Open/Closed Principle: CSV repositories can be replaced with database repositories later
+- Composition: services use models and repositories to perform application operations
+- Java standard-library HTTP server: serves the browser files and JSON endpoints without an external framework
